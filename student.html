@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>EduVerse | Área do Aluno</title>
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-indigo-600 italic tracking-tighter">EduVerse</h1>
+        
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex flex-col items-end gap-1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progresso do Nível</span>
+                <div class="w-48 bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                    <div id="xpProgressBar" class="bg-emerald-500 h-full transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.5)]" style="width: 0%;"></div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 border-l pl-6 border-slate-200">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-slate-800" id="userName">Nome do Aluno</p>
+                    <p class="text-[10px] text-indigo-500 font-black uppercase" id="userLevel">Nível 1</p>
+                </div>
+                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
+                    🎓
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1">Minha Turma</p>
+                    <h3 class="text-xl font-bold text-slate-800" id="classroomName">Carregando...</h3>
+                </div>
+                <button onclick="openModal('joinClassModal')" class="mt-4 text-indigo-600 text-sm font-bold hover:underline text-left">
+                    + Trocar ou Entrar em Turma
+                </button>
+            </div>
+
+            <div class="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="text-indigo-200 text-xs font-bold uppercase mb-1 text-white/80">Experiência Total</p>
+                    <h3 class="text-3xl font-black" id="totalXp">0 <span class="text-lg font-normal opacity-80">XP</span></h3>
+                </div>
+                <div class="absolute -right-4 -bottom-4 text-white/10 text-8xl font-black italic">XP</div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <p class="text-slate-400 text-xs font-bold uppercase mb-1">Próxima Meta</p>
+                <h3 class="text-xl font-bold text-slate-800">Mestre das Funções</h3>
+                <p class="text-xs text-slate-500 mt-2">Faltam 250 XP para o Nível 5</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-800 italic">Missões Disponíveis</h2>
+                    <span class="text-xs font-bold bg-slate-200 text-slate-600 px-3 py-1 rounded-full uppercase">3 Pendentes</span>
+                </div>
+
+                <div id="tasksContainer" class="space-y-4">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 flex justify-between items-center hover:border-indigo-300 transition-all group cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 transition">
+                                📝
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 group-hover:text-indigo-600">Lista de Exercícios: Vetores</h4>
+                                <p class="text-xs text-slate-500">Expira em: 25/02/2026</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-black text-emerald-600">+300 XP</span>
+                            <button class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition">Abrir</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <span>🏆</span> Hall da Fama
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-slate-400">1º</span>
+                                <span class="text-sm font-semibold text-slate-700">Rossini Roberto</span>
+                            </div>
+                            <span class="text-xs font-bold text-indigo-500">2.450 XP</span>
+                        </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="joinClassModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl scale-in-center">
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-2">🔑</div>
+                <h3 class="text-xl font-black text-slate-800">Código da Turma</h3>
+                <p class="text-slate-500 text-sm">Peça ao seu professor o código de 6 caracteres.</p>
+            </div>
+            
+            <input type="text" id="joinCode" maxlength="6" 
+                   class="w-full text-center text-3xl font-mono font-bold tracking-[0.3em] p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-500 outline-none transition uppercase"
+                   placeholder="XXXXXX">
+            
+            <div class="flex flex-col gap-2 mt-6">
+                <button onclick="handleJoinClass()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition">
+                    Entrar na Turma
+                </button>
+                <button onclick="closeModal('joinClassModal')" class="w-full py-2 text-slate-400 font-bold text-sm">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+      // Funções de Controle de UI
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+async function initDashboard() {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 1. Preenche dados do Perfil
+    document.getElementById('userName').innerText = userData.name;
+    document.getElementById('userLevel').innerText = `Nível ${userData.level || 1}`;
+    document.getElementById('totalXp').innerHTML = `${userData.xp || 0} <span class="text-lg font-normal opacity-80">XP</span>`;
+    document.getElementById('classroomName').innerText = userData.classroomName || "Sem turma vinculada";
+
+    // 2. Calcula e anima a Barra de Progresso
+    // Exemplo: Nível sobe a cada 1000 XP. O resto é o progresso da barra.
+    const xpParaProximoNivel = 1000;
+    const progresso = (userData.xp % xpParaProximoNivel) / (xpParaProximoNivel / 100);
+    setTimeout(() => {
+        document.getElementById('xpProgressBar').style.width = `${progresso}%`;
+    }, 500);
+
+    // 3. Busca e Renderiza as Tarefas usando o ID do Estudante
+    try {
+        // Chamando a rota oficial: /tasks/student/{studentId}
+        const tasks = await EduVerseAPI.getMyTasks(userData.id);
+        renderTasks(tasks);
+    } catch (err) {
+        console.error("Erro ao buscar tarefas:", err);
+        document.getElementById('tasksContainer').innerHTML = `
+            <div class="text-center p-10 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                <p class="text-slate-400 font-medium">Nenhuma missão disponível por enquanto. ☕</p>
+                <p class="text-[10px] text-slate-300 mt-1 uppercase font-bold text-center">Verifique se você está em uma turma</p>
+            </div>`;
+    }
+}
+
+function renderTasks(tasks) {
+    const container = document.getElementById('tasksContainer');
+    if (!tasks || tasks.length === 0) return;
+    
+    container.innerHTML = ""; 
+
+    tasks.forEach(task => {
+        const card = `
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-indigo-300 transition-all group gap-4 shadow-sm hover:shadow-md">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-50 transition text-2xl">
+                        📖
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 group-hover:text-indigo-600">${task.title}</h4>
+                        <p class="text-xs text-slate-500 line-clamp-1">${task.description}</p>
+                        <div class="flex gap-3 mt-1">
+                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">📅 Prazo: ${new Date(task.deadline).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-none pt-4 md:pt-0">
+                    <span class="text-sm font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">+${task.xpReward} XP</span>
+                    <button onclick="resolverMissao(${task.id})" class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">Resolver</button>
+                </div>
+            </div>
+        `;
+        container.innerHTML += card;
+    });
+}
+
+// Função para entrar na turma (Rota: /students/join-class)
+async function handleJoinClass() {
+    const codeInput = document.getElementById('joinCode');
+    const code = codeInput.value.toUpperCase();
+
+    if (code.length < 6) {
+        alert("O código deve ter 6 caracteres.");
+        return;
+    }
+
+    try {
+        const response = await EduVerseAPI.joinClass({ code: code });
+        if (response.ok) {
+            alert("🎉 Parabéns! Você entrou na turma.");
+            // Opcional: Buscar dados novos do aluno para atualizar o classroomName no localStorage
+            location.reload(); 
+        } else {
+            const err = await response.json();
+            alert("Erro: " + (err.message || "Código inválido"));
+        }
+    } catch (error) {
+        alert("Falha na conexão com o servidor.");
+    }
+}
+
+function resolverMissao(id) {
+    alert("Missão " + id + ": Funcionalidade de envio de arquivos em breve!");
+}
+
+window.onload = initDashboard;
+    </script>
+</body>
+</html>

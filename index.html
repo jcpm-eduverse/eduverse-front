@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>EduVerse | Login</title>
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-100 transition-all hover:shadow-indigo-100/50">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black text-indigo-600 italic tracking-tighter">EduVerse</h1>
+            <p class="text-slate-400 text-sm mt-2 font-medium">Conectando conhecimento ao futuro.</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">E-mail de Acesso</label>
+                <input type="email" id="email" required 
+                       class="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-none transition-all" 
+                       placeholder="exemplo@edu.com">
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Senha Secreta</label>
+                <input type="password" id="password" required 
+                       class="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-none transition-all" 
+                       placeholder="••••••••">
+            </div>
+
+            <div class="flex items-center gap-3 py-2 ml-1">
+                <input type="checkbox" id="isTeacher" 
+                       class="w-5 h-5 text-indigo-600 rounded-lg border-slate-300 focus:ring-indigo-500 transition-all cursor-pointer">
+                <label for="isTeacher" class="text-sm font-bold text-slate-600 cursor-pointer select-none">Sou Professor / Mestre</label>
+            </div>
+            
+            <button type="submit" id="btnEntrar" 
+                    class="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all active:scale-[0.98]">
+                ENTRAR NO UNIVERSO
+            </button>
+        </form>
+
+        <div id="feedback" class="mt-6 text-center text-[11px] font-black uppercase tracking-widest min-h-[1rem]"></div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const isTeacher = document.getElementById('isTeacher').checked;
+            const feedback = document.getElementById('feedback');
+            const btn = document.getElementById('btnEntrar');
+
+            // Feedback visual de carregamento
+            btn.innerText = "VALIDANDO ACESSO...";
+            btn.disabled = true;
+            feedback.innerText = "";
+
+            try {
+                // Monta o objeto para o backend
+                const payload = { email, password };
+                
+                // Chamada para a API (usando o api.js que criamos)
+                const response = await EduVerseAPI.login(payload);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // IMPORTANTE: Salvar os dados para os dashboards usarem
+                    localStorage.setItem('userData', JSON.stringify(data));
+                    // Se o seu backend retorna um campo "token", salve aqui:
+                    if(data.token) localStorage.setItem('edu_token', data.token);
+
+                    feedback.innerText = "Acesso autorizado! Carregando Universo...";
+                    feedback.style.color = "#10b981";
+
+                    // Redirecionamento baseado no papel (role)
+                    setTimeout(() => {
+                        if (isTeacher) {
+                            window.location.href = "teacher.html";
+                        } else {
+                            window.location.href = "student.html";
+                        }
+                    }, 1000);
+
+                } else {
+                    throw new Error("Credenciais inválidas");
+                }
+
+            } catch (error) {
+                console.error("Erro no login:", error);
+                feedback.innerText = "Erro: Email ou senha incorretos.";
+                feedback.style.color = "#ef4444";
+                btn.innerText = "ENTRAR NO UNIVERSO";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
