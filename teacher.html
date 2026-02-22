@@ -232,33 +232,74 @@
             } catch (e) { table.innerHTML = "<tr><td colspan='3' class='text-red-400 py-4'>Erro ao carregar lista.</td></tr>"; }
         }
 
-        async function confirmAttendance(sId, cId) {
-            const date = document.getElementById('attendanceDate').value || new Date().toISOString().split('T')[0];
-            const res = await EduVerseAPI.markAttendance({ studentId: sId, classroomId: cId, present: true, date });
-            if(res.ok) {
-                const st = document.getElementById(`status-${sId}`);
-                st.innerText = "Registrado ✅";
-                st.className = "text-[9px] font-black text-emerald-500 uppercase tracking-widest";
+        // Função principal que inicia o painel do mestre
+        async function initTeacherDash() {
+            try {
+                // Busca as turmas usando o método que criamos no api.js
+                const response = await EduVerseAPI.getMyClassrooms();
+                
+                // Se o servidor retornar erro (como o 403), paramos aqui para evitar erros de código
+                if (!response.ok) {
+                    console.error(`Falha na API: Status ${response.status}`);
+                    if (response.status === 403) {
+                        alert("Erro 403: O servidor não autorizou este professor a listar turmas. Verifique as permissões no Backend.");
+                    }
+                    return;
+                }
+
+                const classes = await response.json();
+
+                // Validação crucial: o forEach só roda se 'classes' for uma lista []
+                if (classes && Array.isArray(classes)) {
+                    renderClassrooms(classes);
+                    
+                    // Aproveita para atualizar o select do modal de criar missões
+                    const select = document.getElementById('taskClassroom');
+                    if (select) {
+                        select.innerHTML = classes.map(c => 
+                            `<option value="${c.id}">${c.name}</option>`
+                        ).join('');
+                    }
+                } else {
+                    console.warn("Atenção: A API respondeu com sucesso, mas não enviou uma lista de turmas.");
+                    document.getElementById('classroomsContainer').innerHTML = "<p class='text-slate-400'>Nenhuma turma encontrada.</p>";
+                }
+
+            } catch (error) {
+                console.error("Erro crítico ao carregar painel:", error);
             }
         }
 
-        document.getElementById('taskForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById('taskTitle').value,
-                description: document.getElementById('taskDesc').value,
-                xpReward: parseInt(document.getElementById('taskXp').value),
-                deadline: document.getElementById('taskDeadline').value,
-                classroomId: parseInt(document.getElementById('taskClassroom').value)
-            };
+        // Função responsável por desenhar os cards na tela
+        function renderClassrooms(classes) {
+            const container = document.getElementById('classroomsContainer');
+            if (!container) return;
 
-            const res = await EduVerseAPI.createTask(payload);
-            if(res.ok) {
-                alert("🚀 Missão lançada no EduVerse!");
-                closeModal('taskModal');
-                initTeacherDash();
-            }
-        };
+            container.innerHTML = ""; 
+
+            classes.forEach(classe => {
+                const card = `
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group scale-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-indigo-50 p-3 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${classe.code || 'CODE-X'}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 mb-1">${classe.name}</h3>
+                        <p class="text-xs text-slate-400 mb-6 font-medium">Capacidade: ${classe.studentIds ? classe.studentIds.length : 0} Alunos</p>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="openAttendanceModal(${classe.id})" class="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl text-xs font-bold hover:bg-slate-200 transition">Chamada</button>
+                            <button onclick="openModal('taskModal'); document.getElementById('taskClassroom').value = ${classe.id}" class="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition">Missão</button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
 
         window.onload = initTeacherDash;
     </script>
