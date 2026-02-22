@@ -232,28 +232,41 @@
             } catch (e) { table.innerHTML = "<tr><td colspan='3' class='text-red-400 py-4'>Erro ao carregar lista.</td></tr>"; }
         }
 
-        // Função principal que inicia o painel do mestre
         async function initTeacherDash() {
             try {
-                // Busca as turmas usando o método que criamos no api.js
+                // 1. Verificação do Usuário Logado (Evita erro de 'undefined')
+                const userRaw = localStorage.getItem('userData');
+                if (!userRaw) {
+                    window.location.href = "index.html";
+                    return;
+                }
+                const user = JSON.parse(userRaw);
+                document.getElementById('teacherName').innerText = user.name || "Mestre";
+
+                // 2. Chamada da API
                 const response = await EduVerseAPI.getMyClassrooms();
                 
-                // Se o servidor retornar erro (como o 403), paramos aqui para evitar erros de código
                 if (!response.ok) {
-                    console.error(`Falha na API: Status ${response.status}`);
                     if (response.status === 403) {
-                        alert("Erro 403: O servidor não autorizou este professor a listar turmas. Verifique as permissões no Backend.");
+                        console.error("Acesso negado pelo servidor (403).");
+                        document.getElementById('classroomsContainer').innerHTML = `
+                            <div class="col-span-full bg-amber-50 border border-amber-200 p-6 rounded-2xl text-amber-700 text-sm">
+                                <b>Atenção Mestre:</b> O servidor ainda não liberou sua permissão para ver turmas nesta rota. 
+                                <br>Tente atualizar o backend ou usar a rota de professor.
+                            </div>`;
                     }
                     return;
                 }
 
-                const classes = await response.json();
+                const data = await response.json();
+                
+                // 3. Tratamento Flexível de Dados (Array ou Objeto)
+                let classes = Array.isArray(data) ? data : (data.content || []);
 
-                // Validação crucial: o forEach só roda se 'classes' for uma lista []
-                if (classes && Array.isArray(classes)) {
+                if (classes.length > 0) {
                     renderClassrooms(classes);
                     
-                    // Aproveita para atualizar o select do modal de criar missões
+                    // Preencher o select do Modal de Missões de forma segura
                     const select = document.getElementById('taskClassroom');
                     if (select) {
                         select.innerHTML = classes.map(c => 
@@ -261,44 +274,49 @@
                         ).join('');
                     }
                 } else {
-                    console.warn("Atenção: A API respondeu com sucesso, mas não enviou uma lista de turmas.");
-                    document.getElementById('classroomsContainer').innerHTML = "<p class='text-slate-400'>Nenhuma turma encontrada.</p>";
+                    document.getElementById('classroomsContainer').innerHTML = `
+                        <div class="col-span-full text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+                            <p class="text-slate-400 font-medium">Nenhuma turma encontrada no seu universo.</p>
+                        </div>`;
                 }
 
             } catch (error) {
-                console.error("Erro crítico ao carregar painel:", error);
+                console.error("Crash evitado:", error);
             }
         }
 
-        // Função responsável por desenhar os cards na tela
         function renderClassrooms(classes) {
             const container = document.getElementById('classroomsContainer');
             if (!container) return;
 
-            container.innerHTML = ""; 
-
+            let html = "";
             classes.forEach(classe => {
-                const card = `
+                // Se algum campo for nulo, usamos um valor padrão para não quebrar a string
+                const id = classe.id || 0;
+                const name = classe.name || "Turma Sem Nome";
+                const code = classe.code || "EDV-000";
+
+                html += `
                     <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all group scale-in">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-indigo-50 p-3 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332-4.5 1.253" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                 </svg>
                             </div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${classe.code || 'CODE-X'}</span>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${code}</span>
                         </div>
-                        <h3 class="font-bold text-slate-800 mb-1">${classe.name}</h3>
-                        <p class="text-xs text-slate-400 mb-6 font-medium">Capacidade: ${classe.studentIds ? classe.studentIds.length : 0} Alunos</p>
+                        <h3 class="font-bold text-slate-800 mb-1">${name}</h3>
+                        <p class="text-xs text-slate-400 mb-6 font-medium font-mono">ID: #${id}</p>
                         
                         <div class="flex gap-2">
-                            <button onclick="openAttendanceModal(${classe.id})" class="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl text-xs font-bold hover:bg-slate-200 transition">Chamada</button>
-                            <button onclick="openModal('taskModal'); document.getElementById('taskClassroom').value = ${classe.id}" class="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition">Missão</button>
+                            <button onclick="openAttendanceModal(${id})" class="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl text-xs font-bold hover:bg-slate-100 transition">Chamada</button>
+                            <button onclick="openModal('taskModal'); document.getElementById('taskClassroom').value = ${id}" class="flex-1 bg-indigo-50 text-indigo-600 py-3 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition">Missão</button>
                         </div>
                     </div>
                 `;
-                container.innerHTML += card;
             });
+            container.innerHTML = html;
         }
 
         window.onload = initTeacherDash;
