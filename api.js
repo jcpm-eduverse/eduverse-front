@@ -37,10 +37,21 @@ const EduVerseAPI = {
     // --- PROFESSOR & TURMAS (CLASS-ROOM / TEACHER CONTROLLER) ---
     async getMyClassrooms() {
         const token = localStorage.getItem('edu_token');
-        // Rota do dev: /classrooms/get-classrooms
-        const response = await fetch(`${API_BASE}/classrooms/get-classrooms`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        
+        // Rota atualizada: Agora aponta para /teacher-classrooms (exclusiva do mestre)
+        const response = await fetch(`${API_BASE}/classrooms/teacher-classrooms`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
+
+        // Verificação de erro para evitar que o .json() quebre se der 403 ou 500
+        if (!response.ok) {
+            throw new Error(`Erro ao buscar turmas: Status ${response.status}`);
+        }
+
         return await response.json();
     },
 
