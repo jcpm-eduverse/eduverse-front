@@ -3,7 +3,6 @@ const API_BASE = "https://api-eduverse.onrender.com";
 const EduVerseAPI = {
     // --- AUTH & LOGIN ---
     async login(payload) {
-        // O dev passou /auth/login e /students/login. Vamos usar o /auth/login que é o padrão.
         const response = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -21,25 +20,24 @@ const EduVerseAPI = {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload) // { "code": "..." }
+            body: JSON.stringify(payload)
         });
     },
 
     async getMyTasks(studentId) {
         const token = localStorage.getItem('edu_token');
-        // Rota do dev: /tasks/student/{studentId}
         const response = await fetch(`${API_BASE}/tasks/student/${studentId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return await response.json();
     },
 
-    // --- PROFESSOR & TURMAS (CLASS-ROOM / TEACHER CONTROLLER) ---
+    // --- PROFESSOR & TURMAS (CLASS-ROOM-CONTROLLER) ---
     async getMyClassrooms() {
         const token = localStorage.getItem('edu_token');
         
-        // Rota atualizada: Agora aponta para /teacher-classrooms (exclusiva do mestre)
-        const response = await fetch(`${API_BASE}/classrooms/teacher-classrooms`, {
+        // Alterado para a rota disponível no Swagger atual
+        const response = await fetch(`${API_BASE}/classrooms/get-classrooms`, {
             method: 'GET',
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -47,18 +45,28 @@ const EduVerseAPI = {
             }
         });
 
-        // Verificação de erro para evitar que o .json() quebre se der 403 ou 500
-        if (!response.ok) {
-            throw new Error(`Erro ao buscar turmas: Status ${response.status}`);
+        if (response.status === 403) {
+            console.warn("Acesso negado (403): Verifique se o seu usuário possui ROLE_TEACHER ou se o backend foi atualizado.");
         }
 
-        return await response.json();
+        return response;
     },
 
-    // --- TAREFAS (TASK-CONTROLLER) ---
+    async createClassroom(payload) {
+        const token = localStorage.getItem('edu_token');
+        return fetch(`${API_BASE}/classrooms/new-classroom`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    },
+
+    // --- MISSÕES (TASK-CONTROLLER) ---
     async createTask(payload) {
         const token = localStorage.getItem('edu_token');
-        // Rota do dev: /tasks/new-task
         return fetch(`${API_BASE}/tasks/new-task`, {
             method: 'POST',
             headers: { 
@@ -69,43 +77,53 @@ const EduVerseAPI = {
         });
     },
 
-    // --- FREQUÊNCIA (ATTENDANCE-CONTROLLER) ---
-    async getClassroomStudents(classRoomId) {
+    // --- PRESENÇA (ATTENDANCE-CONTROLLER) ---
+    async markAttendance(payload) {
         const token = localStorage.getItem('edu_token');
-        // Rota do dev: /attendance/sheet/{classRoomId} 
-        // (Geralmente retorna a lista de alunos para a chamada)
-        const response = await fetch(`${API_BASE}/attendance/sheet/${classRoomId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        return await response.json();
-    },
-
-    async markAttendance(attendanceData) {
-        const token = localStorage.getItem('edu_token');
-        // Rota do dev: /attendance (POST)
         return fetch(`${API_BASE}/attendance`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(attendanceData)
+            body: JSON.stringify(payload)
         });
+    },
+
+    async getClassStudents(classroomId) {
+        const token = localStorage.getItem('edu_token');
+        // Usando a rota de busca de estudantes vinculada à lógica de turmas
+        const response = await fetch(`${API_BASE}/students/get-students`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return await response.json();
     }
 };
 
-// --- FUNÇÕES DE INTERFACE ---
+// Funções auxiliares para manipulação de interface (Exemplo: Chamada de Alunos)
+async function openAttendanceModal(classroomId) {
+    const modal = document.getElementById('attendanceModal');
+    const list = document.getElementById('attendanceList');
+    const classIdInput = document.getElementById('attendanceClassroomId');
+    
+    if(classIdInput) classIdInput.value = classroomId;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    list.innerHTML = "<tr><td colspan='3' class='text-center py-4 text-slate-400'>Buscando heróis...</td></tr>";
 
-async function loadAttendanceList(classroomId) {
-    const table = document.getElementById('attendanceTable');
     try {
-        // Busca a folha de chamada da turma
-        const students = await EduVerseAPI.getClassroomStudents(classroomId);
-        table.innerHTML = ""; 
+        const students = await EduVerseAPI.getClassStudents(classroomId);
+        list.innerHTML = "";
+
+        if (students.length === 0) {
+            list.innerHTML = "<tr><td colspan='3' class='text-center py-4 text-slate-400'>Nenhum aluno nesta turma.</td></tr>";
+            return;
+        }
 
         students.forEach(student => {
-            table.innerHTML += `
-                <tr class="border-b last:border-0">
+            list.innerHTML += `
+                <tr class="border-b border-slate-50 last:border-0">
                     <td class="py-4 font-semibold text-slate-700">${student.name}</td>
                     <td class="py-4 text-xs text-slate-400 font-bold" id="status-${student.id}">Pendente</td>
                     <td class="py-4 text-right">
@@ -118,6 +136,7 @@ async function loadAttendanceList(classroomId) {
         });
     } catch (e) {
         console.error("Erro ao carregar lista:", e);
+        list.innerHTML = "<tr><td colspan='3' class='text-center py-4 text-red-500'>Erro ao carregar lista.</td></tr>";
     }
 }
 
@@ -137,9 +156,9 @@ async function confirmAttendance(studentId, classroomId) {
         if(res.ok) {
             const statusEl = document.getElementById(`status-${studentId}`);
             statusEl.innerText = "Registrado ✅";
-            statusEl.className = "text-xs font-bold text-emerald-500";
+            statusEl.className = "text-xs font-black text-emerald-500 uppercase tracking-widest";
         }
-    } catch (err) {
-        alert("Erro ao conectar com servidor.");
+    } catch (e) {
+        console.error("Erro ao registrar presença:", e);
     }
 }
