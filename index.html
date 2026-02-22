@@ -65,8 +65,13 @@
                 // Monta o objeto para o backend
                 const payload = { email, password };
                 
-                // Chamada para a API (usando o api.js que criamos)
-                const response = await EduVerseAPI.login(payload);
+                // Roteamento inteligente: Decide qual rota de login chamar
+                let response;
+                if (isTeacher) {
+                    response = await EduVerseAPI.loginTeacher(payload);
+                } else {
+                    response = await EduVerseAPI.loginStudent(payload);
+                }
                 
                 if (response.ok) {
                     const data = await response.json();

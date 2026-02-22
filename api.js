@@ -2,13 +2,20 @@ const API_BASE = "https://api-eduverse.onrender.com";
 
 const EduVerseAPI = {
     // --- AUTH & LOGIN ---
-    async login(payload) {
-        const response = await fetch(`${API_BASE}/auth/login`, {
+    async loginTeacher(payload) {
+        return await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        return response;
+    },
+
+    async loginStudent(payload) {
+        return await fetch(`${API_BASE}/students/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
     },
 
     // --- ALUNO (STUDENT-CONTROLLER) ---
@@ -29,6 +36,12 @@ const EduVerseAPI = {
         const response = await fetch(`${API_BASE}/tasks/student/${studentId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        // TOLERÂNCIA ZERO: Se a API explodir (500) ou negar (403), o JS aborta e protege a tela.
+        if (!response.ok) {
+            throw new Error(`Erro na API. Status: ${response.status}`);
+        }
+        
         return await response.json();
     },
 
@@ -153,11 +166,17 @@ async function confirmAttendance(studentId, classroomId) {
     };
 
     try {
-        const res = await EduVerseAPI.markAttendance(payload);
+        // Envolvemos o objeto em um Array para respeitar o ArrayList do Java
+        const res = await EduVerseAPI.markAttendance([payload]);
+        
         if(res.ok) {
             const statusEl = document.getElementById(`status-${studentId}`);
             statusEl.innerText = "Registrado ✅";
-            statusEl.className = "text-xs font-black text-emerald-500 uppercase tracking-widest";
+            statusEl.className = "text-[9px] font-black text-emerald-500 uppercase tracking-widest";
+        } else {
+            // TOLERÂNCIA ZERO: Nunca deixe um erro silencioso passar
+            console.error("Servidor recusou a presença. Status:", res.status);
+            alert("Erro ao registrar presença. Tente novamente.");
         }
     } catch (e) {
         console.error("Erro ao registrar presença:", e);
