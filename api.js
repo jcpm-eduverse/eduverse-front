@@ -33,11 +33,12 @@ const EduVerseAPI = {
     },
 
     // --- PROFESSOR & TURMAS (CLASS-ROOM-CONTROLLER) ---
+    // --- PROFESSOR & TURMAS (CLASS-ROOM-CONTROLLER) ---
     async getMyClassrooms() {
         const token = localStorage.getItem('edu_token');
         
-        // Alterado para a rota disponível no Swagger atual
-        const response = await fetch(`${API_BASE}/classrooms/get-classrooms`, {
+        // A ROTA CORRETA DO PROFESSOR AQUI:
+        const response = await fetch(`${API_BASE}/classrooms/teacher-classrooms`, {
             method: 'GET',
             headers: { 
                 'Authorization': `Bearer ${token}`,
